@@ -20,7 +20,7 @@ Use API Connect to invoke your Lambda functions directly
 
 ### 2) Import the API YAML file into API Connect
 
-Log into API Manager, go to `Developer`, `Add -> API`, and `Import` the YAML file. 
+Log into API Manager, go to `Developer`, `Add -> API`, and `Import -> Existing OpenAPI`, and select ther `aws-lambda-proxy-1.0.1.yaml` file. 
 
 ### 3) Upload required JavaScript to DataPower Gateway
 
@@ -31,9 +31,11 @@ of the `apiconnect` domain directly. However, this is not recommeded due to the 
 
 `kubectl cp ./aws-v4-sign.js minimum-gw-0:opt/ibm/datapower/drouter/local/apiconnect/aws-v4-sign.js`
 
+<br>
 Or the more proper way of configuring Datapower V10
 
-Create tar file from the js file
+
+Create tar file from the js file.
 
 ```
 $ tar -czvf apic-domain-local.tar.gz aws-v4-sign.js
@@ -44,7 +46,6 @@ Check the content, show contain our file
 
 ```
 $ tar -tzvf apic-domain-local.tar.gz
-
 -rw-r--r--  0 chunsingtsui staff   41734 Nov  3 15:48 aws-v4-sign.js
 ```
 
@@ -59,11 +60,15 @@ kubectl create configmap apicdomain-local \
   --from-file=apic-domain-local.tar.gz
 ```
 
-Create an empty configmap so the Operator doesn't complain when we
-omit a section in the `additionalDomainConfig` edit.
+Create an empty configmap to be used so the Operator doesn't complain when we edit section in the `additionalDomainConfig` without providing any content.
 
-`kubectl create configmap empty`
+```
+kubectl create configmap empty
+```
 
+
+List out the `gatewayclusters` that we have, and edit the one we want to upload the 
+file to.
 
 ```
 $ kubectl get gatewayclusters                                   
