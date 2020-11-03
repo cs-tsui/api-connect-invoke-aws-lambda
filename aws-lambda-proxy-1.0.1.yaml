@@ -1,0 +1,195 @@
+swagger: '2.0'
+info:
+  title: aws-lambda-proxy
+  x-ibm-name: aws-lambda-proxy
+  x-ibm-summary: Proxies AWS Lambda invokes
+  version: 1.0.1
+  description: ''
+schemes:
+  - https
+basePath: /aws-lambda-proxy
+security:
+  - clientID: []
+securityDefinitions:
+  clientID:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+x-ibm-configuration:
+  properties:
+    target-url:
+      value: 'https://aws-lambda.com'
+      description: URL of the proxy policy
+      encoded: false
+  cors:
+    enabled: true
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  enforced: true
+  testable: true
+  assembly:
+    execute:
+      - gatewayscript:
+          version: 2.0.0
+          title: gatewayscript
+          source: >
+            var urlutil = require("url");
+
+            var urlopen = require("urlopen");
+
+            var apim = require("apim");
+
+
+            var awsV4 = require("local:///aws-v4-sign.js");
+
+            var aws_clientid =
+            apim.getvariable("request.headers.aws-client-id");
+
+            var aws_clientsecret =
+            apim.getvariable("request.headers.aws-client-secret");
+
+
+            // debugger;
+
+
+            var region = apim.getvariable("request.parameters.region");
+
+            var func_name = apim.getvariable("request.parameters.func");
+
+            var qualifier = apim.getvariable("request.parameters.Qualifier");
+
+            var query_obj = qualifier ? { Qualifier: qualifier } : {};
+
+            var service = "lambda";
+
+
+            console.error(region, func_name, query_obj, service);
+
+
+            // Careful logging secrets
+
+            // console.error(aws_clientid, aws_clientsecret)
+
+
+            // For lambda, it looks like https://lambda.us-east-1.amazonaws.com
+
+            var endpoint = `https://${service}.${region}.amazonaws.com`;
+
+            var path = `/2015-03-31/functions/${func_name}/invocations`;
+
+
+            // Sign your request
+
+            // This example is post request, you can
+
+            const signedRequest = awsV4
+              .newClient({
+                accessKey: aws_clientid,
+                secretKey: aws_clientsecret,
+                serviceName: service,
+                region: region,
+                endpoint: endpoint,
+              })
+              .signRequest({
+                method: "post",
+                path: path,
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                queryParams: query_obj,
+                body: {},
+              });
+
+            // Log out payload
+
+            console.error(signedRequest);
+
+
+            // Call
+
+            var options = {
+              target: signedRequest.url,
+              method: "POST",
+              headers: signedRequest.headers,
+              //   contentType: 'text/plain',
+              timeout: 60,
+              sslClientProfile: "tls-client-profile-catalog-default", // from Resources -> TLS Profile -> name
+              data: {},
+            };
+
+
+            urlopen.open(options, function (error, response) {
+              if (error) {
+                // an error occurred during the request sending or response header parsing
+                session.output.write("urlopen error: " + JSON.stringify(error));
+              } else {
+                // get the response status code
+                var responseStatusCode = response.statusCode;
+                var responseReasonPhrase = response.reasonPhrase;
+                console.error("Response status code: " + responseStatusCode);
+                console.error("Response reason phrase: " + responseReasonPhrase);
+                // reading response data
+                response.readAsJSON(function (error, responseData) {
+                  if (error) {
+                    throw error;
+                  } else {
+                    console.error(responseData);
+                    session.output.write(responseData);
+                    apim.setvariable("message.status.code", responseStatusCode);
+                    apim.setvariable("message.body", responseData);
+                  }
+                });
+              }
+            });
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+parameters: {}
+tags:
+  - externalDocs:
+      description: Lambda Invoke API
+      url: 'https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html'
+    name: lambda-invoke
+  - externalDocs:
+      description: AWS V4 Signature Example
+      url: >-
+        https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
+    name: aws-v4-signature-example
+paths:
+  '/{region}/{func}':
+    post:
+      responses:
+        '200':
+          description: success
+          schema:
+            type: string
+      consumes: []
+      produces: []
+    parameters:
+      - name: aws-client-id
+        in: header
+        required: true
+        type: string
+      - name: aws-client-secret
+        in: header
+        required: true
+        type: string
+      - name: region
+        in: path
+        required: true
+        description: AWS Region
+        type: string
+      - name: func
+        in: path
+        required: true
+        description: Function Name
+        type: string
+      - name: Qualifier
+        in: query
+        required: false
+        description: Qualifier
+        type: string
