@@ -75,7 +75,7 @@ $ kubectl edit gatewayclusters minimum-gw
 ```
 
 
-Under `spec`, append this section to reference the 'apicdomain-local` and the `empty` ConfigMap we created above.
+Under `spec`, append this section to reference the `apicdomain-local` and the `empty` ConfigMap we created above.
 ```
 spec:
   ...
