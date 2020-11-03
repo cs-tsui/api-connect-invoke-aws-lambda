@@ -139,5 +139,10 @@ $ curl -k --location --request POST 'https://gatway-apiconnect.ibm.com/apic-org/
 Future improvements can be made to this API to include POSTing a body to the
 lambda function. Currently it is not passing the `body` payload to the AWS API Call.
 
+The `aws-v4-sign.js` file is a "compiled" file using `ncc` of a small js library for generating AWS Signature V4. https://github.com/thinhle-agilityio/aws-v4
+
 References:
-- 
+- https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
+- https://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
+- https://github.com/thinhle-agilityio/aws-v4
+- https://ibm.github.io/datapower-operator-doc/guides/domain-configuration/
