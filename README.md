@@ -27,12 +27,16 @@ Log into API Manager, go to `Developer`, `Add -> API`, and `Import -> Existing O
 Make the JavaScript file `aws-v4-sign.js` available to the DataPower gateway, so it may be referenced in the GatewayScript policy.
 
 One quick and dirty way to copy the file into the DataPower gateway is to utilize the `kubectl cp` command to copy the file into the local directory
-of the `apiconnect` domain directly. However, this is not recommeded due to the fact that the file will be lost if the gateway is restarted. Only do this for a quick proof of concept or demo purposes.
+of the `apiconnect` domain directly. However, this is not recommeded due to the fact that the file will be lost if the gateway pod is restarted. Only do this for a quick proof of concept or demo purposes.
+
+Replace `minimum-gw-0` in the following command with your gateway pod name.
 
 `kubectl cp ./aws-v4-sign.js minimum-gw-0:opt/ibm/datapower/drouter/local/apiconnect/aws-v4-sign.js`
 
-<br>
+
+
 Or the more proper way of configuring Datapower V10
+
 
 
 Create tar file from the js file.
